@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title>Đồng hồ đếm ngược & bấm giờ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            text-align: center;
+            padding: 50px;
+        }
+        h2, h3 {
+            color: #333;
+        }
+        input[type="number"], input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 200px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            background-color: #28a745;
+        }
+        button:hover {
+            opacity: 0.85;
+        }
+        #hienThiDemNguoc, #hienThiBamGio {
+            font-size: 48px;
+            color: #007bff;
+            margin-top: 20px;
+        }
+        #thongBaoHetGio {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: red;
+        }
+        hr {
+            margin: 50px 0;
+        }
+    </style>
+</head>
+<body>
+<h2>⏲️ Chọn chế độ</h2>
+<select id="chonCheDo" onchange="chuyenCheDo()">
+    <option value="demNguoc">Đếm ngược</option>
+    <option value="bamGio">Bấm giờ</option>
+</select>
+<h3>Chọn công việc:</h3>
+<select id="danhSachCongViec" onchange="kiemTraCongViec()">
+    <option value="📘 Học bài">📘 Học bài</option>
+    <option value="💪 Tập thể dục">💪 Tập thể dục</option>
+    <option value="✍️ Làm bài tập">✍️ Làm bài tập</option>
+    <option value="😴 Ngủ nghỉ">😴 Ngủ nghỉ</option>
+    <option value="🔧 Công việc khác">🔧 Công việc khác</option>
+</select>
+<br>
+<label for="congViecKhac"></label><input type="text" id="congViecKhac" placeholder="Nhập công việc khác..." oninput="capNhatTenCongViec()" style="display:none;">
+<h3 id="tenCongViecDangLam">🔔 Đang thực hiện: 📘 Học bài</h3>
+<div id="phanDemNguoc">
+    <h2>⏳ Đếm ngược:</h2>
+    <input type="number" id="nhapPhut" placeholder="Nhập số phút" />
+    <button onclick="batDauDemNguoc()">▶ Bắt đầu</button>
+    <button onclick="dungDemNguoc()">⏸ Dừng</button>
+    <button onclick="datLaiDemNguoc()">🔄 Đặt lại</button>
+    <h3>Thời gian còn lại:</h3>
+    <h1 id="hienThiDemNguoc">00:00</h1>
+    <p id="thongBaoHetGio"></p>
+</div>
+<div id="phanBamGio" style="display:none;">
+    <h2>⏱ Bấm giờ:</h2>
+    <button id="batDauBamGioBtn" onclick="batDauBamGio()">▶ Bắt đầu</button>
+    <button id="dungBamGioBtn" onclick="dungBamGio()">⏸ Dừng</button>
+    <button id="datLaiBamGioBtn" onclick="datLaiBamGio()">🔄 Đặt lại</button>
+    <h3>Thời gian đã trôi:</h3>
+    <h1 id="hienThiBamGio">00:00</h1>
+    <audio id="baoThuc" src=".idea/sounds/alarm-301729.mp3" preload="auto"></audio>
+</div>
+<script>
+    function chuyenCheDo() {
+        let congViec = document.getElementById("chonCheDo").value;
+        if (congViec === "demNguoc") {
+            document.getElementById("phanDemNguoc").style.display = "block";
+            document.getElementById("phanBamGio").style.display = "none";
+        } else {
+            document.getElementById("phanDemNguoc").style.display = "none";
+            document.getElementById("phanBamGio").style.display = "block";
+        }
+    }
+    function kiemTraCongViec() {
+        let chon = document.getElementById("danhSachCongViec").value;
+        if (chon === "🔧 Công việc khác") {
+            document.getElementById("congViecKhac").style.display = "inline-block";
+            capNhatTenCongViec();
+        } else {
+            document.getElementById("congViecKhac").style.display = "none";
+            document.getElementById("tenCongViecDangLam").innerText = "🔔 Đang thực hiện: " + chon;
+        }
+    }
+    function capNhatTenCongViec() {
+        let tenMoi = document.getElementById("congViecKhac").value;
+        if (tenMoi.trim() !== "") {
+            document.getElementById("tenCongViecDangLam").innerText = "🔔 Đang thực hiện: " + tenMoi;
+        } else {
+            document.getElementById("tenCongViecDangLam").innerText = "🔔 Đang thực hiện: 🔧 Công việc khác";
+        }
+    }
+    let demNguoc;
+    let thoiGianConLai = 0;
+    let dangChayNguoc = false;
+    function batDauDemNguoc() {
+        if (dangChayNguoc) return;
+        let phut = document.getElementById("nhapPhut").value;
+        if (phut <= 0) {
+            alert("Vui lòng nhập số phút lớn hơn 0");
+            return;
+        }
+        if (thoiGianConLai === 0) {
+            thoiGianConLai = parseInt(phut) * 60;
+        }
+        dangChayNguoc = true;
+        demNguoc = setInterval(function () {
+            if (thoiGianConLai <= 0) {
+                clearInterval(demNguoc);
+                document.getElementById("hienThiDemNguoc").innerText = "00:00";
+                dangChayNguoc = false;
+                let amthanh = document.getElementById("baoThuc");
+                amthanh.play();
+                setTimeout(function () {
+                    amthanh.pause();
+                }, 5000);
+                document.getElementById("thongBaoHetGio").innerText = "⏰ Hết giờ!";
+                return;
+            }
+            let phutConLai = Math.floor(thoiGianConLai / 60);
+            let giayConLai = thoiGianConLai % 60;
+            let hienPhut = phutConLai < 10 ? "0" + phutConLai : phutConLai;
+            let hienGiay = giayConLai < 10 ? "0" + giayConLai : giayConLai;
+            document.getElementById("hienThiDemNguoc").innerText = hienPhut + ":" + hienGiay;
+            thoiGianConLai--;
+        }, 1000);
+    }
+    function dungDemNguoc() {
+        clearInterval(demNguoc);
+        dangChayNguoc = false;
+    }
+    function datLaiDemNguoc() {
+        clearInterval(demNguoc);
+        thoiGianConLai = 0;
+        dangChayNguoc = false;
+        document.getElementById("hienThiDemNguoc").innerText = "00:00";
+        document.getElementById("nhapPhut").value = "";
+        document.getElementById("thongBaoHetGio").innerText = "";
+    }
+    let bamGio;
+    let thoiGianBamGio = 0;
+    let dangChayBamGio = false;
+
+    function batDauBamGio() {
+        if (dangChayBamGio) return;
+        dangChayBamGio = true;
+        bamGio = setInterval(function () {
+            thoiGianBamGio++;
+            let phut = Math.floor(thoiGianBamGio / 60);
+            let giay = thoiGianBamGio % 60;
+            let hienPhut = phut < 10 ? "0" + phut : phut;
+            let hienGiay = giay < 10 ? "0" + giay : giay;
+            document.getElementById("hienThiBamGio").innerText = hienPhut + ":" + hienGiay;
+        }, 1000);
+    }
+    function dungBamGio() {
+        clearInterval(bamGio);
+        dangChayBamGio = false;
+    }
+    function datLaiBamGio() {
+        clearInterval(bamGio);
+        thoiGianBamGio = 0;
+        dangChayBamGio = false;
+        document.getElementById("hienThiBamGio").innerText = "00:00";
+    }
+</script>
+</body>
+</html>
