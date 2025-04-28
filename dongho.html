@@ -19,6 +19,7 @@
             width: 200px;
             border-radius: 8px;
             border: 1px solid #ccc;
+            margin-bottom: 10px;
         }
         button {
             padding: 10px 20px;
@@ -47,6 +48,22 @@
         }
         hr {
             margin: 50px 0;
+        }
+        #thongBaoDaLuu {
+            font-size: 16px;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9f7ef;
+            border-radius: 8px;
+            color: #333;
+        }
+        select, input[type="number"], input[type="text"], button {
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input[type="number"]:focus, input[type="text"]:focus, button:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(41, 185, 41, 0.6);
         }
     </style>
 </head>
@@ -85,8 +102,15 @@
     <h3>Thời gian đã trôi:</h3>
     <h1 id="hienThiBamGio">00:00</h1>
     <audio id="baoThuc" src=".idea/sounds/alarm-301729.mp3" preload="auto"></audio>
+    <div id="thongBaoDaLuu"></div>
 </div>
 <script>
+    let tenCongViec = "📘 Học bài"; // Biến lưu công việc hiện tại
+    let thoiGianLuu = 0;  // Biến lưu thời gian đã đặt lại
+    let bamGio;
+    let thoiGianBamGio = 0;
+    let dangChayBamGio = false;
+
     function chuyenCheDo() {
         let congViec = document.getElementById("chonCheDo").value;
         if (congViec === "demNguoc") {
@@ -97,6 +121,7 @@
             document.getElementById("phanBamGio").style.display = "block";
         }
     }
+
     function kiemTraCongViec() {
         let chon = document.getElementById("danhSachCongViec").value;
         if (chon === "🔧 Công việc khác") {
@@ -105,66 +130,20 @@
         } else {
             document.getElementById("congViecKhac").style.display = "none";
             document.getElementById("tenCongViecDangLam").innerText = "🔔 Đang thực hiện: " + chon;
+            tenCongViec = chon;
         }
     }
+
     function capNhatTenCongViec() {
         let tenMoi = document.getElementById("congViecKhac").value;
         if (tenMoi.trim() !== "") {
             document.getElementById("tenCongViecDangLam").innerText = "🔔 Đang thực hiện: " + tenMoi;
+            tenCongViec = tenMoi;
         } else {
             document.getElementById("tenCongViecDangLam").innerText = "🔔 Đang thực hiện: 🔧 Công việc khác";
+            tenCongViec = "🔧 Công việc khác";
         }
     }
-    let demNguoc;
-    let thoiGianConLai = 0;
-    let dangChayNguoc = false;
-    function batDauDemNguoc() {
-        if (dangChayNguoc) return;
-        let phut = document.getElementById("nhapPhut").value;
-        if (phut <= 0) {
-            alert("Vui lòng nhập số phút lớn hơn 0");
-            return;
-        }
-        if (thoiGianConLai === 0) {
-            thoiGianConLai = parseInt(phut) * 60;
-        }
-        dangChayNguoc = true;
-        demNguoc = setInterval(function () {
-            if (thoiGianConLai <= 0) {
-                clearInterval(demNguoc);
-                document.getElementById("hienThiDemNguoc").innerText = "00:00";
-                dangChayNguoc = false;
-                let amthanh = document.getElementById("baoThuc");
-                amthanh.play();
-                setTimeout(function () {
-                    amthanh.pause();
-                }, 5000);
-                document.getElementById("thongBaoHetGio").innerText = "⏰ Hết giờ!";
-                return;
-            }
-            let phutConLai = Math.floor(thoiGianConLai / 60);
-            let giayConLai = thoiGianConLai % 60;
-            let hienPhut = phutConLai < 10 ? "0" + phutConLai : phutConLai;
-            let hienGiay = giayConLai < 10 ? "0" + giayConLai : giayConLai;
-            document.getElementById("hienThiDemNguoc").innerText = hienPhut + ":" + hienGiay;
-            thoiGianConLai--;
-        }, 1000);
-    }
-    function dungDemNguoc() {
-        clearInterval(demNguoc);
-        dangChayNguoc = false;
-    }
-    function datLaiDemNguoc() {
-        clearInterval(demNguoc);
-        thoiGianConLai = 0;
-        dangChayNguoc = false;
-        document.getElementById("hienThiDemNguoc").innerText = "00:00";
-        document.getElementById("nhapPhut").value = "";
-        document.getElementById("thongBaoHetGio").innerText = "";
-    }
-    let bamGio;
-    let thoiGianBamGio = 0;
-    let dangChayBamGio = false;
 
     function batDauBamGio() {
         if (dangChayBamGio) return;
@@ -178,15 +157,62 @@
             document.getElementById("hienThiBamGio").innerText = hienPhut + ":" + hienGiay;
         }, 1000);
     }
+
     function dungBamGio() {
         clearInterval(bamGio);
         dangChayBamGio = false;
     }
+
     function datLaiBamGio() {
         clearInterval(bamGio);
+        thoiGianLuu = thoiGianBamGio;  // Lưu lại thời gian hiện tại
         thoiGianBamGio = 0;
         dangChayBamGio = false;
         document.getElementById("hienThiBamGio").innerText = "00:00";
+
+        // Hiển thị thời gian đã lưu cùng với công việc
+        let phutLuu = Math.floor(thoiGianLuu / 60);
+        let giayLuu = thoiGianLuu % 60;
+        let hienPhutLuu = phutLuu < 10 ? "0" + phutLuu : phutLuu;
+        let hienGiayLuu = giayLuu < 10 ? "0" + giayLuu : giayLuu;
+
+        let thongBao = `Công việc: ${tenCongViec} - Thời gian đã lưu: ${hienPhutLuu}:${hienGiayLuu}`;
+        let divThongBao = document.createElement("div");
+        divThongBao.textContent = thongBao;
+        document.getElementById("thongBaoDaLuu").appendChild(divThongBao);
+    }
+
+    function batDauDemNguoc() {
+        let phut = document.getElementById("nhapPhut").value;
+        if (phut <= 0 || isNaN(phut)) {
+            alert("Vui lòng nhập số phút hợp lệ");
+            return;
+        }
+        let thoiGianDemNguoc = phut * 60;
+        let demNguoc = setInterval(function () {
+            if (thoiGianDemNguoc <= 0) {
+                clearInterval(demNguoc);
+                document.getElementById("thongBaoHetGio").innerText = "⏰ Hết giờ! Công việc " + tenCongViec + " đã hoàn thành.";
+                document.getElementById("hienThiDemNguoc").innerText = "00:00";
+                let baoThuc = document.getElementById("baoThuc");
+                baoThuc.play();
+            } else {
+                thoiGianDemNguoc--;
+                let phutHienTai = Math.floor(thoiGianDemNguoc / 60);
+                let giayHienTai = thoiGianDemNguoc % 60;
+                let hienPhut = phutHienTai < 10 ? "0" + phutHienTai : phutHienTai;
+                let hienGiay = giayHienTai < 10 ? "0" + giayHienTai : giayHienTai;
+                document.getElementById("hienThiDemNguoc").innerText = hienPhut + ":" + hienGiay;
+            }
+        }, 1000);
+    }
+    function dungDemNguoc() {
+        clearInterval(demNguoc);
+    }
+    function datLaiDemNguoc() {
+        document.getElementById("nhapPhut").value = '';
+        document.getElementById("hienThiDemNguoc").innerText = "00:00";
+        document.getElementById("thongBaoHetGio").innerText = '';
     }
 </script>
 </body>
